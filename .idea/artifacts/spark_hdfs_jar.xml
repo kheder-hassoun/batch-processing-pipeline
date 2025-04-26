@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="spark-hdfs:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/spark_hdfs_jar</output-path>
+    <root id="archive" name="spark-hdfs.jar">
+      <element id="module-output" name="spark-hdfs" />
+    </root>
+  </artifact>
+</component>

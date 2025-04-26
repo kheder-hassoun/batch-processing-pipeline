@@ -1,0 +1,22 @@
+Copy sample.txt Into HDFS
+docker cp input-data/sample.txt namenode:/sample.txt
+
+Then we put it into HDFS:
+docker exec -it namenode hdfs dfs -mkdir -p /input
+docker exec -it namenode hdfs dfs -put /sample.txt /input/
+then verify
+docker exec -it namenode hdfs dfs -ls /input
+docker exec -it namenode hdfs dfs -cat /input/sample.txt
+*********************************************************************
+
+
+docker exec -it spark-master /bin/bash
+------------------------
+/spark/bin/spark-submit --master spark://spark-master:7077  --class me.spark.WordCount   /opt/spark-apps/spark-hdfs.jar hdfs://namenode:8020/input/sample.txt  hdfs://namenode:8020/output
+-----------------------
+view results
+docker exec -it namenode hdfs dfs -ls /output
+docker exec -it namenode hdfs dfs -cat /output/part-00000
+********************  status   ****************
+*** Spark
+http://localhost:8080/
