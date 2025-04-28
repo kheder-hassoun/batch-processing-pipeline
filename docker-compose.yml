@@ -37,6 +37,7 @@ services:
       - ./out/artifacts/spark_hdfs_jar/spark-hdfs.jar:/opt/spark-apps/spark-hdfs.jar #this to map the local jar to the image so we don’t need to rebuild the image each time build the code
     depends_on:
       - namenode
+      - mongodb
 
   spark-worker:
     image: bde2020/spark-worker:3.3.0-hadoop3.3
@@ -49,7 +50,17 @@ services:
     depends_on:
       - spark-master
       - datanode
+      - mongodb
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
 
 volumes:
   namenode_data:
   datanode_data:
+  mongo_data:

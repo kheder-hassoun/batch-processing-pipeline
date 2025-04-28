@@ -27,6 +27,11 @@
             <version>3.4.1</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.mongodb.spark</groupId>
+            <artifactId>mongo-spark-connector_2.12</artifactId>
+            <version>10.1.1</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -42,6 +47,14 @@
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
                 </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
