@@ -12,6 +12,7 @@ docker exec -it namenode hdfs dfs -cat /input/sample.txt
 
 docker exec -it spark-master /bin/bash
 ------------------------
+/spark/bin/spark-submit   --master spark://spark-master:7077   --packages org.mongodb.spark:mongo-spark-connector_2.12:10.1.1   --class me.spark.WordCount   /opt/spark-apps/spark-hdfs.jar   hdfs://namenode:8020/input/sample.txt   mymongo.prefixcollection
 /spark/bin/spark-submit --master spark://spark-master:7077  --class me.spark.WordCount --packages org.mongodb.spark:mongo-spark-connector_2.12:10.1.1  /opt/spark-apps/spark-hdfs.jar
 /spark/bin/spark-submit --master spark://spark-master:7077  --class me.spark.WordCount   /opt/spark-apps/spark-hdfs.jar hdfs://namenode:8020/input/sample.txt  hdfs://namenode:8020/output
 -----------------------
@@ -21,3 +22,11 @@ docker exec -it namenode hdfs dfs -cat /output/part-00000
 ********************  status   ****************
 *** Spark
 http://localhost:8080/
+
+
+***data base
+docker container exec -it mongodb mongosh
+ show databases
+use mymongo
+show collections
+db.prefixcollection.find()
