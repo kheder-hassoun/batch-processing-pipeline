@@ -23,8 +23,8 @@ public class TrendingAutocomplete {
             System.exit(1);
         }
 
-        String inputPath        = args[0]; // e.g. hdfs://namenode:8020/logs/queries.txt
-        String mongoNamespace   = args[1]; // e.g. mymongo.autocomplete_prefixes
+        String inputPath        = args[0]; //  hdfs://namenode:8020/logs/queries.txt
+        String mongoNamespace   = args[1]; //  mymongo.autocomplete_prefixes
         int topK                = Integer.parseInt(args[2]); // e.g. 5
 
         SparkSession spark = SparkSession.builder()
