@@ -81,7 +81,7 @@ public class TrendingAutocomplete {
 
         // STEP 6: Write to MongoDB
         aggregated.write()
-                .format("mongodb.spark.sql.DefaultSource")
+                .format("mongodb")
                 .mode("overwrite")
                 .save();
 
