@@ -1,12 +1,12 @@
-Copy sample.txt Into HDFS
-docker cp input-data/sample.txt namenode:/sample.txt
+Copy queries.txt Into HDFS
+docker cp input-data/queries.txt namenode:/queries.txt
 
 Then we put it into HDFS:
-docker exec -it namenode hdfs dfs -mkdir -p /input
-docker exec -it namenode hdfs dfs -put /sample.txt /input/
+docker exec -it namenode hdfs dfs -mkdir -p /logs
+docker exec -it namenode hdfs dfs -put /queries.txt /logs/
 then verify
-docker exec -it namenode hdfs dfs -ls /input
-docker exec -it namenode hdfs dfs -cat /input/sample.txt
+docker exec -it namenode hdfs dfs -ls /logs
+docker exec -it namenode hdfs dfs -cat /logs/queries.txt
 *********************************************************************
 
 
