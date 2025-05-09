@@ -4,6 +4,8 @@ docker cp input-data/queries.txt namenode:/queries.txt
 Then we put it into HDFS:
 docker exec -it namenode hdfs dfs -mkdir -p /logs
 docker exec -it namenode hdfs dfs -put /queries.txt /logs/
+// or force put if its already existed
+docker exec -it namenode hdfs dfs -put -f /queries.txt /logs/
 then verify
 docker exec -it namenode hdfs dfs -ls /logs
 docker exec -it namenode hdfs dfs -cat /logs/queries.txt
