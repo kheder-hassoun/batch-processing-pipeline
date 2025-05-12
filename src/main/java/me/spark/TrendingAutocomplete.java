@@ -17,6 +17,12 @@ import static org.apache.spark.sql.functions.*;
 
 public class TrendingAutocomplete {
 
+    /*
+
+    this approach no more supported now we will write in kafka and make a consumer that actully do the database writeing and we can implement our own logic on
+    it so its good for future algorithm improvement
+     */
+
     public static void main(String[] args) {
         if (args.length < 3) {
             System.err.println("Usage: TrendingAutocomplete <inputPath> <mongoDatabase>.<mongoCollection> <topK>");
