@@ -1,0 +1,3 @@
+[Spark Batch Job] → [Kafka Topic] → [Policy Service] → [MongoDB]
+✔️ Spark: does the heavy computation
+✔️ Policy Service: controls the business logic before DB write (clean, scalable)
