@@ -1,3 +1,16 @@
+------------------------------final test ----------------------------
+docker exec -it namenode hdfs dfs -cat /logs/queries.txt
+docker exec -it spark-master /bin/bash /spark/bin/spark-submit  --master spark://spark-master:7077  --class me.spark.TrendingAutocomplete   --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0   /opt/spark-apps/spark-hdfs.jar   hdfs://namenode:8020/logs/queries.txt   autocomplete_prefixes  5
+
+/// the last problem 14 may 2025
+there is no class name TrendingAutocomplete // i got to menfist and fix it but think the problem is old jar in the conatiners so  i delete it .
+in the next time you should add the text file agian to the hdfs after creat the containers
+
+
+
+
+
+---------------------------------------------------------------------
 Copy queries.txt Into HDFS
 docker cp input-data/queries.txt namenode:/queries.txt
 

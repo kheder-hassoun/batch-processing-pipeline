@@ -82,6 +82,18 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  policy-service:
+    build:
+      context: ../policy-service
+    container_name: policy-service
+    ports:
+      - "8081:8080"
+    depends_on:
+      - kafka
+      - mongodb
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017
 
 volumes:
   namenode_data:
