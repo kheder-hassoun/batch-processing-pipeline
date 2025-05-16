@@ -1,25 +1,29 @@
 package me.spark;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.*;
-import org.apache.spark.sql.expressions.WindowSpec;
+
 import org.apache.spark.sql.expressions.Window;
+import org.apache.spark.sql.expressions.WindowSpec;
 import org.apache.spark.sql.types.*;
 import org.apache.spark.sql.functions.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.apache.spark.sql.functions.*;
+
 public class TrendingAutocomplete {
 
     public static void main(String[] args) {
         if (args.length < 3) {
-            System.err.println("Usage: TrendingAutocomplete <inputPath> <topK> <kafkaBootstrapServers>");
+            System.err.println("Usage: TrendingAutocomplete <inputPath> <kafkaBootstrapServers> <topK>");
             System.exit(1);
         }
 
-        String inputPath = args[0]; // e.g., hdfs://namenode:8020/logs/queries.txt
-        int topK = Integer.parseInt(args[1]); // e.g., 5
-        String kafkaBootstrap = args[2]; // e.g., kafka:9092
+        String inputPath = args[0];                    // e.g. hdfs://namenode:8020/logs/queries.txt
+        String kafkaBootstrapServers = args[1];        // e.g. kafka:9092
+        int topK = Integer.parseInt(args[2]);          // e.g. 5
 
         SparkSession spark = SparkSession.builder()
                 .appName("Trending Autocomplete Pipeline")
@@ -30,6 +34,7 @@ public class TrendingAutocomplete {
                 .textFile(inputPath)
                 .javaRDD()
                 .filter(line -> line != null && line.trim().length() >= 2);
+
         // STEP 2: Generate (prefix, fullQuery) pairs
         JavaRDD<Row> prefixPairs = queries.flatMap(line -> {
             String q = line.trim();
@@ -41,7 +46,7 @@ public class TrendingAutocomplete {
             return out.iterator();
         });
 
-        // Define schema
+        // Define schema for (prefix, query)
         StructType schema = new StructType(new StructField[]{
                 new StructField("prefix", DataTypes.StringType, false, Metadata.empty()),
                 new StructField("query", DataTypes.StringType, false, Metadata.empty())
@@ -49,46 +54,34 @@ public class TrendingAutocomplete {
 
         Dataset<Row> df = spark.createDataFrame(prefixPairs, schema);
 
-        // STEP 3: Count frequencies
+        // STEP 3: Count frequencies of each (prefix, query)
         Dataset<Row> counted = df.groupBy("prefix", "query")
                 .count();
 
-        // STEP 4: Rank and keep top K
-        WindowSpec w = Window.partitionBy("prefix").orderBy(functions.col("count").desc());
+        // STEP 4: Rank by frequency within each prefix, keep top K
+        WindowSpec w = Window.partitionBy("prefix").orderBy(col("count").desc());
         Dataset<Row> ranked = counted
                 .withColumn("rank", functions.row_number().over(w))
-                .filter(functions.col("rank").leq(topK))
+                .filter(col("rank").leq(topK))
                 .drop("rank");
 
-        // STEP 5: Aggregate completions per prefix
-        Column completionStruct = functions.struct(
-                functions.col("query").alias("query"),
-                functions.col("count").alias("frequency"),
-                functions.current_timestamp().alias("last_updated")
-        );
-
-        Dataset<Row> aggregated = ranked.groupBy("prefix")
-                .agg(functions.collect_list(completionStruct).alias("completions"));
+        // STEP 5: Assemble completions as JSON
+        Dataset<Row> grouped = ranked
+                .groupBy("prefix")
+                .agg(to_json(collect_list(struct(
+                        col("query").alias("query"),
+                        col("count").alias("frequency"),
+                        current_timestamp().alias("last_updated")
+                ))).alias("value"))
+                .selectExpr("prefix as key", "value");
 
         // STEP 6: Write to Kafka
-        // Prepare key/value strings (Kafka needs both as strings)
-        Dataset<Row> kafkaReady = aggregated.select(
-                functions.col("prefix").alias("key"),
-                functions.to_json(functions.struct(
-                        functions.col("prefix"),
-                        functions.col("completions")
-                )).alias("value")
-        );
-
-        kafkaReady.write()
+        grouped.write()
                 .format("kafka")
-                .option("kafka.bootstrap.servers", kafkaBootstrap)
-                .option("topic", "trending-prefixes")
+                .option("kafka.bootstrap.servers", kafkaBootstrapServers)
+                .option("topic", "autocomplete_prefixes")
                 .save();
 
         spark.stop();
     }
 }
-
-
-
