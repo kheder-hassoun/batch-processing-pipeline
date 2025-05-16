@@ -85,11 +85,10 @@ services:
   kafka-tools:
     image: confluentinc/cp-kafka:7.3.0
     container_name: kafka-tools
-    entrypoint: /bin/sh
+    command: [ "sleep", "infinity" ]
     depends_on:
       - kafka
-    networks:
-      - default
+
 
   policy-service:
     build:
