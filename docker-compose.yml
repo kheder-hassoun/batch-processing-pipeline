@@ -101,7 +101,6 @@ services:
       - mongodb
     environment:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017
 
 volumes:
   namenode_data:
