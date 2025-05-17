@@ -1,4 +1,5 @@
 ------------------------------final test ----------------------------
+
 docker exec -it namenode hdfs dfs -cat /logs/queries.txt
 docker exec -it spark-master /bin/bash
 // run it separately due the stupid terminal doesn't accept the capital letters
