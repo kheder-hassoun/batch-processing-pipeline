@@ -5,7 +5,7 @@ docker exec -it spark-master /bin/bash
   /spark/bin/spark-submit  --master spark://spark-master:7077  --class me.spark.TrendingAutocomplete  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0  /opt/spark-apps/spark-hdfs.jar  hdfs://namenode:8020/logs/queries.txt  kafka:9092  5
 
 run this in the kafka-tools
-docker exec -it kafka kafka-console-consumer.sh  --bootstrap-server localhost:9092  --topic autocomplete_prefixes  --from-beginning
+docker exec -it kafka-tools kafka-console-consumer --bootstrap-server kafka:9092  --topic autocomplete_prefixes --from-beginning
 
 
 

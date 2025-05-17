@@ -72,15 +72,17 @@ public class TrendingAutocomplete {
                         col("query").alias("query"),
                         col("count").alias("frequency"),
                         current_timestamp().alias("last_updated")
-                ))).alias("value"))
-                .selectExpr("prefix as key", "value");
+                ))).alias("completions"))
+                .selectExpr("to_json(struct(prefix, completions)) as value");
 
-        // STEP 6: Write to Kafka
+
+
         grouped.write()
                 .format("kafka")
                 .option("kafka.bootstrap.servers", kafkaBootstrapServers)
-                .option("topic", "autocomplete_prefixes")
+                .option("topic", "trending-prefixes")
                 .save();
+
 
         spark.stop();
     }
