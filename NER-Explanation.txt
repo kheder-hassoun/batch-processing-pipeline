@@ -1,0 +1,9 @@
+the main editing will be in the policy-service not here .
+but it was important to mention and create a branch for it in case to easy roll back.
+but way NER ?
+searching for "how to install docker in linux" isn't similar to "how to install chrome in linux"
+or "how to install docker in windows"
+so the key should not be "how to install docker in linux" it should be something like "how to install APPLICATION in OS"
+
+May / 19 / 2025
+[kheder]
