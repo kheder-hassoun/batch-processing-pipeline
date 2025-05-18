@@ -17,7 +17,7 @@ public class TrendingAutocomplete {
 
     public static void main(String[] args) {
         if (args.length < 3) {
-            System.err.println("Usage: TrendingAutocomplete <inputPath> <kafkaBootstrapServers> <topK>");
+            System.err.println("Usage:  TrendingAutocomplete <inputPath> <kafkaBootstrapServers> <topK>");
             System.exit(1);
         }
 
