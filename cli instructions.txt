@@ -8,6 +8,13 @@ docker exec -it spark-master /bin/bash
 run this in the kafka-tools
 docker exec -it kafka-tools kafka-console-consumer --bootstrap-server kafka:9092  --topic autocomplete_prefixes --from-beginning
 
+--- docker
+docker compose down -v
+docker compose down --volumes
+docker compose build --no-cache policy-service
+or
+docker compose build --no-cache
+
 
 
 
@@ -51,4 +58,5 @@ docker container exec -it mongodb mongosh
  show databases
 use mymongo
 show collections
-db.prefixcollection.find()
+db.autocomplete_prefixes.find().pretty()
+

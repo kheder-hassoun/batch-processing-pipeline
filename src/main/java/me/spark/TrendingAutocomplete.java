@@ -68,12 +68,13 @@ public class TrendingAutocomplete {
         // STEP 5: Assemble completions as JSON
         Dataset<Row> grouped = ranked
                 .groupBy("prefix")
-                .agg(to_json(collect_list(struct(
+                .agg(collect_list(struct(
                         col("query").alias("query"),
                         col("count").alias("frequency"),
                         current_timestamp().alias("last_updated")
-                ))).alias("completions"))
-                .selectExpr("to_json(struct(prefix, completions)) as value");
+                )).alias("completions"))
+                .select(to_json(struct("prefix", "completions")).alias("value"));
+
 
 
 
