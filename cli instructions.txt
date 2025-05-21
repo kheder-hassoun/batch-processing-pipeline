@@ -60,3 +60,4 @@ use mymongo
 show collections
 db.autocomplete_prefixes.find().pretty()
 
+test
