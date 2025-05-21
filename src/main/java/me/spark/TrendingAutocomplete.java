@@ -75,9 +75,6 @@ public class TrendingAutocomplete {
                 )).alias("completions"))
                 .select(to_json(struct("prefix", "completions")).alias("value"));
 
-
-
-
         grouped.write()
                 .format("kafka")
                 .option("kafka.bootstrap.servers", kafkaBootstrapServers)
