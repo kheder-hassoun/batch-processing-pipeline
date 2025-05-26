@@ -1,3 +1,5 @@
+dead approach NER
+
 ------------------------------final test ----------------------------
 
 docker exec -it namenode hdfs dfs -cat /logs/queries.txt
