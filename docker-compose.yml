@@ -45,6 +45,18 @@ services:
       - kafka
     networks:
       - app-network
+  autocomplete-service:
+    build:
+      context: ../autocomplete-service
+    container_name: autocomplete-service
+    ports:
+      - "8082:8080"
+    depends_on:
+      - mongodb
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/mymongo
+    networks:
+      - app-network
 
   spark-worker:
     image: bde2020/spark-worker:3.3.0-hadoop3.3
