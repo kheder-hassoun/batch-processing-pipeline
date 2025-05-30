@@ -1,0 +1,99 @@
+
+
+------------- initial steps --------------
+        1. Redis Cluster requires manual cluster creation:
+        ```
+        docker exec -it redis-node-1 redis-cli --cluster create  redis-node-1:7000 redis-node-2:7001 redis-node-3:7002  --cluster-replicas 0
+
+        ```
+        2.db
+                -- 1. Cumulative frequency table
+                CREATE TABLE IF NOT EXISTS prefix_query_frequency (
+                  prefix VARCHAR(60)    NOT NULL,
+                  query  VARCHAR(500)   NOT NULL,
+                  frequency INT         NOT NULL,
+                  last_updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                  PRIMARY KEY (prefix, query)
+                ) ENGINE=InnoDB;
+
+                -- 2. Top-K suggestions table
+                CREATE TABLE IF NOT EXISTS prefix_suggestions (
+                  prefix       VARCHAR(60) NOT NULL,
+                  completions  JSON        NOT NULL,
+                  last_updated TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                  PRIMARY KEY (prefix)
+                ) ENGINE=InnoDB;
+
+        username:user password :pass
+
+
+------------------------------------------------------
+
+------------- steps explanation-----------
+1. File Structure in HDFS
+    Each hour, a new file is added. Spark reads only the last 24 hourly files
+    /logs/2025-05-28-01.txt
+    /logs/2025-05-28-02.txt
+    ...
+    /logs/2025-05-28-23.txt
+
+2. Spark job will:
+   List all HDFS files for the last 24 hours (using a naming convention).
+   Read and combine them into a single RDD/DataFrame.
+   Track frequencies cumulatively (same as now).
+   Output top-K per prefix.
+   Save to the temp SQL DB (instead of Kafka).
+
+3. Spark Logic Recap
+   Each hour:
+   Load last hour’s file from HDFS (e.g., /logs/2025-05-28-12.txt)
+   Extract (prefix, query) pairs
+   Update/increment prefix_query_frequency table
+   For each prefix, get top K queries by frequency
+   Format them as JSON
+   Overwrite or upsert them into prefix_suggestions
+
+4. Temp SQL DB Output
+   Instead of Kafka, use JDBC(java database connectivity) to save directly to MySQL .
+   We will store two tables in the MySQL temp database:
+     prefix_query_frequency (Intermediate Table)
+        This table stores cumulative frequencies for each (prefix, query) pair
+        It remembers how many times a query appeared under each prefix.
+        Example content:
+        prefix	query	frequency	last_updated
+        "he"	"hello world"	42	2025-05-28 12:00:00
+     prefix_suggestions (Final Temp Output)
+        This table stores the top-K suggestions per prefix (used for syncing to Redis via Debezium → Kafka).
+        Example content:
+        prefix                          	completions	                                      last_updated
+        "he"	[{"query":"hello world","frequency":42},{"query":"hey","frequency":18}]	   2025-05-28 12:00:00
+
+
+5.
+
+
+------------ run -------------------
+
+build this project with
+mvn clean package
+go to the db and creat the tabels see section above
+docker compose down --volumes
+ docker volume rm $(docker volume ls -q)
+docker compose up -d
+
+
+--- wait 29 second first
+powershell -ExecutionPolicy Bypass -File upload_to_hdfs.ps1
+if you got error with policy run this
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+
+then verify
+docker exec -it namenode hdfs dfs -ls /logs
+check if the build contin the connecteor
+jar tf /opt/spark-apps/your-job.jar | grep mysql
+
+docker exec -it spark-master  /spark/bin/spark-submit   --master spark://spark-master:7077  --class me.spark.IncrementalAutocomplete  --jars /opt/spark/jars/mysql-connector-j-8.0.33.jar    /opt/spark-apps/spark-hdfs.jar   hdfs://namenode:8020/logs   2025-05-30-15   jdbc:mysql://mysql:3306/autocomplete   prefix_query_frequency   prefix_suggestions   10
+
+or first run
+ docker exec -it spark-master /bin/bash

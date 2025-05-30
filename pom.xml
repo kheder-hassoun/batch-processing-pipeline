@@ -27,14 +27,32 @@
             <version>3.4.1</version>
             <scope>provided</scope>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.mongodb.spark</groupId>-->
+<!--            <artifactId>mongo-spark-connector_2.12</artifactId>-->
+<!--            <version>10.1.1</version>-->
+<!--        </dependency>-->
+        <!-- MySQL Connector -->
         <dependency>
-            <groupId>org.mongodb.spark</groupId>
-            <artifactId>mongo-spark-connector_2.12</artifactId>
-            <version>10.1.1</version>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.33</version>
         </dependency>
     </dependencies>
     <build>
         <plugins>
+            <!-- Shade plugin to build fat jar -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals><goal>shade</goal></goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>

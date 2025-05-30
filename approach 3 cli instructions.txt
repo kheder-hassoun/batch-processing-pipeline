@@ -13,6 +13,8 @@ docker compose down -v
 docker compose down --volumes
 docker compose build --no-cache policy-service
 or
+docker compose up -d
+
 docker compose build --no-cache
 
 

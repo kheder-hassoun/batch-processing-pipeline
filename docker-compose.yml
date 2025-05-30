@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
 
   # -------------------------------
@@ -8,12 +6,14 @@ services:
   namenode:
     image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
     container_name: namenode
-    ports:
-      - 9870:9870
     environment:
       - CLUSTER_NAME=autocomplete-hdfs
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:8020
+    ports:
+      - "9870:9870"
+      - "8020:8020"
     volumes:
-      - namenode:/hadoop/dfs/name
+      - namenode_data:/hadoop/dfs/name
     networks:
       - autocomplete-net
 
@@ -21,14 +21,13 @@ services:
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
     container_name: datanode
     environment:
-      - CLUSTER_NAME=autocomplete-hdfs
       - CORE_CONF_fs_defaultFS=hdfs://namenode:8020
     depends_on:
       - namenode
     ports:
-      - 9864:9864
+      - "9864:9864"
     volumes:
-      - datanode:/hadoop/dfs/data
+      - datanode_data:/hadoop/dfs/data
     networks:
       - autocomplete-net
 
@@ -43,6 +42,10 @@ services:
     ports:
       - 7077:7077
       - 8080:8080
+    volumes:
+      - ./target/spark-hdfs-1.0-SNAPSHOT-jar-with-dependencies.jar:/opt/spark-apps/spark-hdfs.jar
+      - ./mysql-connector/mysql-connector-j-8.0.33.jar:/opt/spark/jars/mysql-connector-j-8.0.33.jar
+
     networks:
       - autocomplete-net
 
@@ -159,22 +162,22 @@ services:
   # -------------------------------
   # Spring Boot Kafka Consumer (Policy Service)
   # -------------------------------
-  policy-service:
-    build:
-      context: ./policy-service
-    container_name: policy-service
-    depends_on:
-      - kafka
-      - redis-node-1
-    networks:
-      - autocomplete-net
+#  policy-service:
+#    build:
+#      context: ./policy-service
+#    container_name: policy-service
+#    depends_on:
+#      - kafka
+#      - redis-node-1
+#    networks:
+#      - autocomplete-net
 
 # -------------------------------
 # Volumes & Network
 # -------------------------------
 volumes:
-  namenode:
-  datanode:
+  namenode_data:
+  datanode_data:
   mysql-data:
 
 networks:
