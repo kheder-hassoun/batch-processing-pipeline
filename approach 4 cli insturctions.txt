@@ -75,6 +75,8 @@
             - Stream those changes to a Kafka topic named autocomplete.autocomplete.prefix_suggestions.
             - Use the MySQL binary logs (binlog) you configured earlier to track inserts, updates, and deletes.
 
+            Note : in the debezium log dont care about this error:
+            "2025-05-31 23:02:27,935 INFO || [Worker clientId=connect-1, groupId=debezium] Node -1 disconnected. [org.apache.kafka.clients.NetworkClient]"
 
             4. kafka
 
