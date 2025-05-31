@@ -62,8 +62,8 @@ public class IncrementalAutocomplete {
                 .format("jdbc")
                 .option("url", jdbcUrl)
                 .option("dbtable", freqTable)
-                .option("user", "user")
-                .option("password", "pass")
+                .option("user", "root")
+                .option("password", "root")
                 .option("driver", "com.mysql.cj.jdbc.Driver")
                 .load();
 
@@ -79,8 +79,8 @@ public class IncrementalAutocomplete {
                 .format("jdbc")
                 .option("url", jdbcUrl)
                 .option("dbtable", freqTable)
-                .option("user", "user")
-                .option("password", "pass")
+                .option("user", "root")
+                .option("password", "root")
                 .option("driver", "com.mysql.cj.jdbc.Driver")
                 .mode(SaveMode.Overwrite)
                 .save();
@@ -116,8 +116,8 @@ public class IncrementalAutocomplete {
                 .format("jdbc")
                 .option("url", jdbcUrl)
                 .option("dbtable", topKTable)
-                .option("user", "user")
-                .option("password", "pass")
+                .option("user", "root")
+                .option("password", "root")
                 .option("driver", "com.mysql.cj.jdbc.Driver")
                 .mode(SaveMode.Overwrite)
                 .save();

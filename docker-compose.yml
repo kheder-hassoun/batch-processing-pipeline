@@ -44,7 +44,7 @@ services:
       - 8080:8080
     volumes:
       - ./target/spark-hdfs-1.0-SNAPSHOT-jar-with-dependencies.jar:/opt/spark-apps/spark-hdfs.jar
-      - ./mysql-connector/mysql-connector-j-8.0.33.jar:/opt/spark/jars/mysql-connector-j-8.0.33.jar
+      - ./mysql/mysql-connector-j-8.0.33.jar:/opt/spark/jars/mysql-connector-j-8.0.33.jar # no need it works without it
 
     networks:
       - autocomplete-net
@@ -77,6 +77,7 @@ services:
       - 3306:3306
     volumes:
       - mysql-data:/var/lib/mysql
+      - ./mysql/conf.d:/etc/mysql/conf.d
     networks:
       - autocomplete-net
 
