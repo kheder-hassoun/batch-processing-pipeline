@@ -26,6 +26,19 @@
 
         username:root password :root
 
+        insert a raw for test debezium and kafka
+
+        INSERT INTO `autocomplete`.`prefix_suggestions`
+        (`prefix`,
+        `completions`,
+        `last_updated`)
+        VALUES
+        ('fudv',
+        '["fudv hhhhhahaha"]',
+        '2025-05-30 22:08:15');
+
+
+
         3. after testing the spark and its successfully write in the mongo . you should create the file my.cnf and add
         it to the volume in the mysql container . then enable the debezium run this in the windows (host):
         use postman:
@@ -33,38 +46,53 @@
         "
                 curl -X POST http://localhost:8083/connectors -H "Content-Type: application/json" -d
 
-            {
-                               "name": "mysql-autocomplete-connector",
-                               "config": {
-                                 "connector.class": "io.debezium.connector.mysql.MySqlConnector",
-                                 "database.hostname": "mysql",
-                                 "database.port": "3306",
-                                 "database.user": "root",
-                                 "database.password": "root",
-                                 "database.server.id": "223344",
-                                 "database.server.name": "autocomplete",
-                                 "database.include.list": "autocomplete",
-                                 "table.include.list": "autocomplete.prefix_suggestions",
-                                 "include.schema.changes": "false",
-                                 "database.history": "io.debezium.relational.history.KafkaDatabaseHistory",
-                                 "schema.history.internal.kafka.bootstrap.servers": "kafka:9092",
-                                 "schema.history.internal.kafka.topic": "schema-changes.autocomplete",
-                                 "topic.prefix": "autocomplete"
-                               }
+                {
+                  "name": "mysql-autocomplete-connector",
+                  "config": {
+                    "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+                    "database.hostname": "mysql",
+                    "database.port": "3306",
+                    "database.user": "root",
+                    "database.password": "root",
+                    "database.server.id": "223344",
+                    "database.server.name": "autocomplete",
+                    "database.include.list": "autocomplete",
+                    "table.include.list": "autocomplete.prefix_suggestions",
+                    "include.schema.changes": "false",
+                    "schema.history.internal.kafka.bootstrap.servers": "kafka:9092",
+                    "schema.history.internal.kafka.topic": "schema-changes.autocomplete",
+                    "topic.prefix": "autocomplete"
+                  }
+                }
 
 
 
             "
-            and run
-            docker exec -it mysql mysql -u root -p
-            then
-            GRANT SELECT, RELOAD, SHOW DATABASES, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'user'@'%';
-            FLUSH PRIVILEGES;
+
 
             This curl command sends a POST request to the Debezium Connect REST API (http://localhost:8083/connectors) to create a new MySQL source connector. This connector will:
             - Monitor changes in the autocomplete.prefix_suggestions table inside the autocomplete database.
             - Stream those changes to a Kafka topic named autocomplete.autocomplete.prefix_suggestions.
             - Use the MySQL binary logs (binlog) you configured earlier to track inserts, updates, and deletes.
+
+
+            4. kafka
+
+            no need to set up anything just test after sent the request to the debezium with :
+                 docker exec -it kafka bash
+                [appuser@3103e4c3d49c ~]$ kafka-topics --bootstrap-server kafka:9092 --list
+                reesult :
+                        __consumer_offsets
+                        autocomplete.autocomplete.prefix_suggestions
+                        my_connect_configs
+                        my_connect_offsets
+                        my_connect_statuses
+                        schema-changes.autocomplete
+                   consum it :
+                    kafka-console-consumer --bootstrap-server kafka:9092  --topic autocomplete.autocomplete.prefix_suggestions   --from-beginning
+
+
+
 
 
 ------------------------------------------------------
