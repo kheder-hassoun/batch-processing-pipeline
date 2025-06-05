@@ -4,6 +4,12 @@
         1. Redis Cluster requires manual cluster creation:
         ```
         docker exec -it redis-node-1 redis-cli --cluster create  redis-node-1:7000 redis-node-2:7001 redis-node-3:7002  --cluster-replicas 0
+        test it :
+            docker exec -it redis-node-1 sh
+                redis-cli -c -p 7000
+                    cluster nodes
+                        SET test-key "hello"
+                        GET test-key
 
         ```
         2.db
@@ -142,16 +148,30 @@
 5.
 
 
------------- run -------------------
+---------------------------- run -------------------
+------------ docker -------------------
+-----------------------------------
 
 build this project with
 mvn clean package
 go to the db and creat the tabels see section above
 docker compose down --volumes
+docker compose build --no-cache
  docker volume rm $(docker volume ls -q)
+docker-compose --profile part1 --profile part2 up
+docker-compose --profile part2 up
 docker compose up -d
 
+docker-compose rm -sfv policy-service
+    This will:
 
+        -s: stop the container
+
+        -f: force remove it
+
+        -v: remove any associated anonymous or named volumes
+docker-compose up -d --build policy-service
+-----------------------------------
 --- wait 29 second first
 powershell -ExecutionPolicy Bypass -File upload_to_hdfs.ps1
 if you got error with policy run this
@@ -167,3 +187,10 @@ docker exec -it spark-master  /spark/bin/spark-submit   --master spark://spark-m
 
 or first run
  docker exec -it spark-master /bin/bash
+
+test the second part (from mysql >>>)
+
+
+check the redis
+docker exec -it redis-node-1 redis-cli -c -p 7000
+get kheded74r

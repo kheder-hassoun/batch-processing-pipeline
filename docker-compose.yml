@@ -169,15 +169,15 @@ services:
   # -------------------------------
   # Spring Boot Kafka Consumer (Policy Service)
   # -------------------------------
-#  policy-service:
-#    build:
-#      context: ./policy-service
-#    container_name: policy-service
-#    depends_on:
-#      - kafka
-#      - redis-node-1
-#    networks:
-#      - autocomplete-net
+  policy-service:
+    build:
+      context: ../policy-service
+    container_name: policy-service
+    depends_on:
+      - kafka
+      - redis-node-1
+    networks:
+      - autocomplete-net
 
 # -------------------------------
 # Volumes & Network
