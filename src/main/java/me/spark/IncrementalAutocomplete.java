@@ -88,13 +88,23 @@ public class IncrementalAutocomplete {
         // 6. Compute top-K per prefix
 
 
-        // 6. Compute top-K per prefix
+        // Step 6: Compute top-K queries per prefix
         WindowSpec w = Window.partitionBy("prefix").orderBy(col("frequency").desc());
-        Dataset<Row> topKdf = merged
+
+        Dataset<Row> topKPerPrefix = merged
                 .withColumn("rank", row_number().over(w))
-                .filter(col("rank").leq(topK))  // keep topK rows per prefix
-                .select("prefix", "query", "frequency", "rank") // flatten it
-                .withColumn("last_updated", current_timestamp());
+                .filter(col("rank").leq(topK))
+                .select("prefix", "query")
+                .groupBy("prefix")
+                .agg(collect_list("query").alias("completions"))
+                .withColumn("completions_json", to_json(col("completions")))
+                .withColumn("last_updated", current_timestamp())
+                .select(
+                        col("prefix"),
+                        col("completions_json").alias("completions"),
+                        col("last_updated")
+                );
+
         //this complex type cannot be writen to the db
 //        WindowSpec w = Window.partitionBy("prefix").orderBy(col("frequency").desc());
 //        Dataset<Row> topKdf = merged
@@ -111,8 +121,8 @@ public class IncrementalAutocomplete {
 //                )
 //                .withColumn("last_updated", current_timestamp());
 
-        // 7. Write top-K suggestions (overwrite)
-        topKdf.write()
+        // Step 7: Write top-K completions to DB
+        topKPerPrefix.write()
                 .format("jdbc")
                 .option("url", jdbcUrl)
                 .option("dbtable", topKTable)
@@ -121,6 +131,7 @@ public class IncrementalAutocomplete {
                 .option("driver", "com.mysql.cj.jdbc.Driver")
                 .mode(SaveMode.Overwrite)
                 .save();
+
 
         spark.stop();
     }

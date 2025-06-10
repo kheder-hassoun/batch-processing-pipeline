@@ -177,13 +177,19 @@ powershell -ExecutionPolicy Bypass -File upload_to_hdfs.ps1
 if you got error with policy run this
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
+docker cp input-data/2025-06-10-23.txt namenode:/queries.txt
+
+docker exec -it namenode hdfs dfs -mkdir -p /logs
+
+docker exec -it namenode hdfs dfs -put /queries.txt /logs/
 
 then verify
 docker exec -it namenode hdfs dfs -ls /logs
+ docker exec -it namenode hdfs dfs -cat /logs/queries.txt
 check if the build contin the connecteor
 jar tf /opt/spark-apps/your-job.jar | grep mysql
 
-docker exec -it spark-master  /spark/bin/spark-submit   --master spark://spark-master:7077  --class me.spark.IncrementalAutocomplete  --jars /opt/spark/jars/mysql-connector-j-8.0.33.jar    /opt/spark-apps/spark-hdfs.jar   hdfs://namenode:8020/logs   2025-05-30-15   jdbc:mysql://mysql:3306/autocomplete   prefix_query_frequency   prefix_suggestions   10
+docker exec -it spark-master  /spark/bin/spark-submit   --master spark://spark-master:7077  --class me.spark.IncrementalAutocomplete  --jars /opt/spark/jars/mysql-connector-j-8.0.33.jar    /opt/spark-apps/spark-hdfs.jar   hdfs://namenode:8020/logs   queries   jdbc:mysql://mysql:3306/autocomplete   prefix_query_frequency   prefix_suggestions   10
 
 or first run
  docker exec -it spark-master /bin/bash
@@ -193,4 +199,15 @@ test the second part (from mysql >>>)
 
 check the redis
 docker exec -it redis-node-1 redis-cli -c -p 7000
+cluster nodes
 get kheded74r
+
+///////////// this is not stable maybe change the ip or the the port or or .... see it with cluster nodes
+
+docker exec -it redis-node-1 redis-cli -c -h 172.18.0.2 -p 7000 SCAN 0 COUNT 1000
+
+
+docker exec -it redis-node-1 redis-cli -c -h 172.18.0.2 -p 7001 SCAN 0 COUNT 1000
+
+
+docker exec -it redis-node-1 redis-cli -c -h 172.18.0.4 -p 7002 SCAN 0 COUNT 1000
