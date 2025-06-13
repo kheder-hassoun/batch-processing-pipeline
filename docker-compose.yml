@@ -199,15 +199,15 @@ services:
   # -------------------------------
   # DO noooooooooooooooooooot ruuuuuuuuuuuun this whith others ⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️
   # -------------------------------
-#  autocomplete-service:
-#    build:
-#      context: ../autocomplete-api
-#    container_name: autocomplete-service
-#    ports:
-#      - "8082:8082"
-#    networks:
-#      autocomplete-net:
-#        ipv4_address: 172.28.0.21
+  autocomplete-service:
+    build:
+      context: ../autocomplete-api
+    container_name: autocomplete-service
+    ports:
+      - "8090:8082"
+    networks:
+      autocomplete-net:
+        ipv4_address: 172.28.0.21
 
 # -------------------------------
 # Volumes & Network
