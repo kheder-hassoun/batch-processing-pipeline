@@ -1,9 +1,27 @@
 
 
+
+
+
+
+
+
+start from scratch i just build the containers its completey free and empty .........  12/6/2025 2:00 am
+
+
+
+
+
+
+
+
+
+
+
 ------------- initial steps --------------
         1. Redis Cluster requires manual cluster creation:
         ```
-        docker exec -it redis-node-1 redis-cli --cluster create  redis-node-1:7000 redis-node-2:7001 redis-node-3:7002  --cluster-replicas 0
+        docker exec -it redis-node-1 redis-cli --cluster create  172.28.0.2:7000 172.28.0.3:7001 172.28.0.4:7002 --cluster-replicas 0
         test it :
             docker exec -it redis-node-1 sh
                 redis-cli -c -p 7000
@@ -13,6 +31,13 @@
 
         ```
         2.db
+        befor install run this
+        docker volume ls
+            if you find any valumes related to mysql remove it with
+            docker volume rm vlumename
+        docker exec -it mysql mysql -u root -p
+        # enter password: root
+            ````
                 -- 1. Cumulative frequency table
                 CREATE TABLE IF NOT EXISTS prefix_query_frequency (
                   prefix VARCHAR(60)    NOT NULL,
@@ -200,14 +225,10 @@ test the second part (from mysql >>>)
 check the redis
 docker exec -it redis-node-1 redis-cli -c -p 7000
 cluster nodes
-get kheded74r
 
-///////////// this is not stable maybe change the ip or the the port or or .... see it with cluster nodes
-
-docker exec -it redis-node-1 redis-cli -c -h 172.18.0.2 -p 7000 SCAN 0 COUNT 1000
-
-
-docker exec -it redis-node-1 redis-cli -c -h 172.18.0.2 -p 7001 SCAN 0 COUNT 1000
-
-
-docker exec -it redis-node-1 redis-cli -c -h 172.18.0.4 -p 7002 SCAN 0 COUNT 1000
+docker exec -it redis-node-1 redis-cli -c -p 7000
+ SCAN 0 COUNT 1000
+docker exec -it redis-node-2 redis-cli -c -p 7001
+ SCAN 0 COUNT 1000
+ docker exec -it redis-node-3 redis-cli -c -p 7002
+  SCAN 0 COUNT 1000

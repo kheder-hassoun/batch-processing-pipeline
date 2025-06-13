@@ -30,6 +30,9 @@ public class IncrementalAutocomplete {
 
         SparkSession spark = SparkSession.builder()
                 .appName("Incremental Autocomplete")
+                .master("local[2]")  // Use only 2 cores
+                .config("spark.driver.cores", "2")  // Driver cores
+                .config("spark.executor.cores", "2") // Executor cores
                 .getOrCreate();
 
         // 1. Read last-hour logs

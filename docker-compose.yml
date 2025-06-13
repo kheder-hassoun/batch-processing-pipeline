@@ -1,5 +1,5 @@
-services:
 
+services:
   # -------------------------------
   # HDFS (Hadoop)
   # -------------------------------
@@ -15,7 +15,8 @@ services:
     volumes:
       - namenode_data:/hadoop/dfs/name
     networks:
-      - autocomplete-net
+      autocomplete-net:
+        ipv4_address: 172.28.0.10
 
   datanode:
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
@@ -29,7 +30,8 @@ services:
     volumes:
       - datanode_data:/hadoop/dfs/data
     networks:
-      - autocomplete-net
+      autocomplete-net:
+        ipv4_address: 172.28.0.11
 
   # -------------------------------
   # Spark
@@ -44,10 +46,10 @@ services:
       - 8080:8080
     volumes:
       - ./target/spark-hdfs-1.0-SNAPSHOT-jar-with-dependencies.jar:/opt/spark-apps/spark-hdfs.jar
-      - ./mysql/mysql-connector-j-8.0.33.jar:/opt/spark/jars/mysql-connector-j-8.0.33.jar # no need it works without it
-
+      - ./mysql/mysql-connector-j-8.0.33.jar:/opt/spark/jars/mysql-connector-j-8.0.33.jar
     networks:
-      - autocomplete-net
+      autocomplete-net:
+        ipv4_address: 172.28.0.12
 
   spark-worker:
     image: bde2020/spark-worker:3.3.0-hadoop3.3
@@ -60,10 +62,11 @@ services:
     ports:
       - 8081:8081
     networks:
-      - autocomplete-net
+      autocomplete-net:
+        ipv4_address: 172.28.0.13
 
   # -------------------------------
-  # MySQL (Temp DB)
+  # MySQL
   # -------------------------------
   mysql:
     image: mysql:8.0.33
@@ -79,7 +82,8 @@ services:
       - mysql-data:/var/lib/mysql
       - ./mysql/conf.d:/etc/mysql/conf.d
     networks:
-      - autocomplete-net
+      autocomplete-net:
+        ipv4_address: 172.28.0.14
 
   # -------------------------------
   # Kafka & Zookeeper
@@ -93,7 +97,8 @@ services:
     ports:
       - 2181:2181
     networks:
-      - autocomplete-net
+      autocomplete-net:
+        ipv4_address: 172.28.0.15
 
   kafka:
     image: confluentinc/cp-kafka:7.3.0
@@ -101,8 +106,8 @@ services:
     depends_on:
       - zookeeper
     ports:
-      - 9092:9092  # for internal use
-      - 29092:29092  # optional external access from host
+      - 9092:9092
+      - 29092:29092
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -112,12 +117,11 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     networks:
-      - autocomplete-net
-
-
+      autocomplete-net:
+        ipv4_address: 172.28.0.16
 
   # -------------------------------
-  # Debezium (CDC for MySQL)
+  # Debezium
   # -------------------------------
   debezium:
     image: debezium/connect:2.5
@@ -134,40 +138,53 @@ services:
       - OFFSET_STORAGE_TOPIC=my_connect_offsets
       - STATUS_STORAGE_TOPIC=my_connect_statuses
     networks:
-      - autocomplete-net
+      autocomplete-net:
+        ipv4_address: 172.28.0.17
 
   # -------------------------------
-  # Redis Cluster (3 nodes)
+  # Redis Cluster Nodes
   # -------------------------------
   redis-node-1:
     image: redis:7-alpine
     container_name: redis-node-1
-    command: ["redis-server", "--port", "7000", "--cluster-enabled", "yes", "--cluster-config-file", "nodes.conf", "--cluster-node-timeout", "5000", "--appendonly", "yes"]
+    command: ["redis-server", "/conf/redis.conf"]
+    volumes:
+      - ./redis-cluster/node-1/data:/data
+      - ./redis-cluster/node-1/conf/redis.conf:/conf/redis.conf
     ports:
       - 7000:7000
     networks:
-      - autocomplete-net
+      autocomplete-net:
+        ipv4_address: 172.28.0.2
 
   redis-node-2:
     image: redis:7-alpine
     container_name: redis-node-2
-    command: ["redis-server", "--port", "7001", "--cluster-enabled", "yes", "--cluster-config-file", "nodes.conf", "--cluster-node-timeout", "5000", "--appendonly", "yes"]
+    command: ["redis-server", "/conf/redis.conf"]
+    volumes:
+      - ./redis-cluster/node-2/data:/data
+      - ./redis-cluster/node-2/conf/redis.conf:/conf/redis.conf
     ports:
       - 7001:7001
     networks:
-      - autocomplete-net
+      autocomplete-net:
+        ipv4_address: 172.28.0.3
 
   redis-node-3:
     image: redis:7-alpine
     container_name: redis-node-3
-    command: ["redis-server", "--port", "7002", "--cluster-enabled", "yes", "--cluster-config-file", "nodes.conf", "--cluster-node-timeout", "5000", "--appendonly", "yes"]
+    command: ["redis-server", "/conf/redis.conf"]
+    volumes:
+      - ./redis-cluster/node-3/data:/data
+      - ./redis-cluster/node-3/conf/redis.conf:/conf/redis.conf
     ports:
       - 7002:7002
     networks:
-      - autocomplete-net
+      autocomplete-net:
+        ipv4_address: 172.28.0.4
 
   # -------------------------------
-  # Spring Boot Kafka Consumer (Policy Service)
+  # Spring Boot Services
   # -------------------------------
   policy-service:
     build:
@@ -177,7 +194,20 @@ services:
       - kafka
       - redis-node-1
     networks:
-      - autocomplete-net
+      autocomplete-net:
+        ipv4_address: 172.28.0.20
+  # -------------------------------
+  # DO noooooooooooooooooooot ruuuuuuuuuuuun this whith others ⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️
+  # -------------------------------
+#  autocomplete-service:
+#    build:
+#      context: ../autocomplete-api
+#    container_name: autocomplete-service
+#    ports:
+#      - "8082:8082"
+#    networks:
+#      autocomplete-net:
+#        ipv4_address: 172.28.0.21
 
 # -------------------------------
 # Volumes & Network
@@ -189,3 +219,7 @@ volumes:
 
 networks:
   autocomplete-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
