@@ -201,7 +201,7 @@ services:
   # -------------------------------
   autocomplete-service:
     build:
-      context: ../autocomplete-api
+      context: ../autocomplete-service-entry-point
     container_name: autocomplete-service
     ports:
       - "8090:8082"
@@ -210,14 +210,14 @@ services:
         ipv4_address: 172.28.0.21
   tfidf-node-1:
     build:
-      context: ../My-Tf-IDF-Distributed-System-Web-based-/TF-IDF-System-Core
+      context: ../Tf-IDF-Distributed-System/TF-IDF-System-Core
     container_name: tfidf-node-1
     depends_on:
       - zookeeper
     environment:
       - SPRING_PROFILES_ACTIVE=default
     volumes:
-      - ../My-Tf-IDF-Distributed-System-Web-based-/TF-IDF-System-Core/src/main/resources/documents:/app/documents
+      - ../Tf-IDF-Distributed-System/TF-IDF-System-Core/src/main/resources/documents:/app/documents
     ports:
       - "8085:8085"
     networks:
@@ -226,7 +226,7 @@ services:
 
   tfidf-node-2:
     build:
-      context: ../My-Tf-IDF-Distributed-System-Web-based-/TF-IDF-System-Core
+      context: ../Tf-IDF-Distributed-System/TF-IDF-System-Core
     container_name: tfidf-node-2
     depends_on:
       - zookeeper
