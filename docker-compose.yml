@@ -208,6 +208,17 @@ services:
     networks:
       autocomplete-net:
         ipv4_address: 172.28.0.21
+  search-service:
+    build:
+      context: ../search-service-entry-point
+    container_name: search-service
+    depends_on:
+      - zookeeper
+    ports:
+      - "8088:8088"
+    networks:
+      autocomplete-net:
+        ipv4_address: 172.28.0.22
   tfidf-node-1:
     build:
       context: ../Tf-IDF-Distributed-System/TF-IDF-System-Core
