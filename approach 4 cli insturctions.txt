@@ -183,8 +183,7 @@ go to the db and creat the tabels see section above
 docker compose down --volumes
 docker compose build --no-cache
  docker volume rm $(docker volume ls -q)
-docker-compose --profile part1 --profile part2 up
-docker-compose --profile part2 up
+
 docker compose up -d
 
 docker-compose rm -sfv policy-service
