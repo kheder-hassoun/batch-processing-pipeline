@@ -208,6 +208,35 @@ services:
     networks:
       autocomplete-net:
         ipv4_address: 172.28.0.21
+  tfidf-node-1:
+    build:
+      context: ../My-Tf-IDF-Distributed-System-Web-based-/TF-IDF-System-Core
+    container_name: tfidf-node-1
+    depends_on:
+      - zookeeper
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+    volumes:
+      - ../My-Tf-IDF-Distributed-System-Web-based-/TF-IDF-System-Core/src/main/resources/documents:/app/documents
+    ports:
+      - "8085:8085"
+    networks:
+      autocomplete-net:
+        ipv4_address: 172.28.0.30
+
+  tfidf-node-2:
+    build:
+      context: ../My-Tf-IDF-Distributed-System-Web-based-/TF-IDF-System-Core
+    container_name: tfidf-node-2
+    depends_on:
+      - zookeeper
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+    ports:
+      - "8086:8085"
+    networks:
+      autocomplete-net:
+        ipv4_address: 172.28.0.31
 
 # -------------------------------
 # Volumes & Network
