@@ -182,6 +182,14 @@ mvn clean package
 go to the db and creat the tabels see section above
 docker compose down --volumes
 docker compose build --no-cache
+------
+or
+docker compose rm  tfidf-node-1
+docker compose build --no-cache tfidf-node-2
+docker compose up  tfidf-node-1
+
+----
+
  docker volume rm $(docker volume ls -q)
 
 docker compose up -d
