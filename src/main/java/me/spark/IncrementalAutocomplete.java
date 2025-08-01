@@ -2,51 +2,78 @@ package me.spark;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FilterFunction;
+import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.expressions.WindowSpec;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 
-import static org.apache.spark.sql.functions.*;
-
-
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
+
+import static org.apache.spark.sql.functions.*;
 
 public class IncrementalAutocomplete {
 
     public static void main(String[] args) throws Exception {
+
         if (args.length < 6) {
-            System.err.println("Usage: IncrementalAutocomplete <hdfsLogsPath> <hour> <jdbcUrl> <dbTableFreq> <dbTableTopK> <topK>");
+            System.err.println("Usage: IncrementalAutocomplete "
+                    + "<hdfsLogsPath> <logfile> <jdbcUrl> "
+                    + "<dbTableFreq> <dbTableTopK> <topK>");
             System.exit(1);
         }
-        String logsBasePath = args[0];       // e.g. hdfs://namenode:8020/logs
-        String hour = args[1];               // e.g. 2025-05-28-12
-        String jdbcUrl = args[2];            // e.g. jdbc:mysql://mysql:3306/autocomplete
-        String freqTable = args[3];          // prefix_query_frequency
-        String topKTable = args[4];          // prefix_suggestions
-        int topK = Integer.parseInt(args[5]);
+
+        final String logsBasePath = args[0];
+        final String logFile = args[1];
+        final String jdbcUrl = args[2];
+        final String freqTable = args[3];
+        final String topKTable = args[4];
+        final int topK = Integer.parseInt(args[5]);
+
+        // Load config.properties
+        Properties props = new Properties();
+        try (InputStream input = IncrementalAutocomplete.class
+                .getClassLoader()
+                .getResourceAsStream("config.properties")) {
+            if (input == null) {
+                throw new RuntimeException("config.properties not found in resources");
+            }
+            props.load(input);
+        }
+
+        final String sparkMaster = props.getProperty("spark.master", "local[2]");
+        final String driverCores = props.getProperty("spark.driver.cores", "2");
+        final String executorCores = props.getProperty("spark.executor.cores", "2");
+
+        final String dbUser = props.getProperty("jdbc.user");
+        final String dbPassword = props.getProperty("jdbc.password");
+        final String jdbcDriver = props.getProperty("jdbc.driver");
 
         SparkSession spark = SparkSession.builder()
                 .appName("Incremental Autocomplete")
-                .master("local[2]")  // Use only 2 cores
-                .config("spark.driver.cores", "2")  // Driver cores
-                .config("spark.executor.cores", "2") // Executor cores
+                .master(sparkMaster)
+                .config("spark.driver.cores", driverCores)
+                .config("spark.executor.cores", executorCores)
                 .getOrCreate();
 
-        // 1. Read last-hour logs
-        String path = String.format("%s/%s.txt", logsBasePath, hour);
+        // 1. Read & NORMALISE raw logs
+        String path = String.format("%s/%s.txt", logsBasePath, logFile);
         Dataset<String> lines = spark.read().textFile(path)
-                .filter((FilterFunction<String>) line -> line != null && line.trim().length() >= 2);
+                .filter((FilterFunction<String>) line ->
+                        line != null && line.trim().length() >= 2)
+                .map((MapFunction<String, String>) raw ->
+                        raw.trim().toLowerCase(), Encoders.STRING());
 
-        // 2. Generate (prefix, query, count=1) rows
-        JavaRDD<Row> pairs = lines.javaRDD().flatMap(line -> {
-            String q = line.trim();
-            int maxLen = Math.min(q.length(), 60);
+        // 2. Build (prefix, query, 1) tuples
+        JavaRDD<Row> pairs = lines.javaRDD().flatMap(query -> {
+            int maxLen = Math.min(query.length(), 60);
             List<Row> out = new ArrayList<>();
             for (int L = 2; L <= maxLen; L++) {
-                out.add(RowFactory.create(q.substring(0, L), q, 1));
+                out.add(RowFactory.create(query.substring(0, L), query, 1));
             }
             return out.iterator();
         });
@@ -60,44 +87,42 @@ public class IncrementalAutocomplete {
                 .groupBy("prefix", "query")
                 .agg(sum("count").alias("new_freq"));
 
-        // 3. Load existing cumulative frequencies
+        // 3. Load & merge with existing cumulative frequencies
         Dataset<Row> existing = spark.read()
                 .format("jdbc")
                 .option("url", jdbcUrl)
                 .option("dbtable", freqTable)
-                .option("user", "root")
-                .option("password", "root")
-                .option("driver", "com.mysql.cj.jdbc.Driver")
+                .option("user", dbUser)
+                .option("password", dbPassword)
+                .option("driver", jdbcDriver)
                 .load();
 
-        // 4. Merge: sum existing.frequency + new_freq
-        Dataset<Row> merged = existing.select(col("prefix"), col("query"), col("frequency").alias("old_freq"))
-                .unionByName(newCounts.select(col("prefix"), col("query"), col("new_freq").alias("old_freq")))
+        Dataset<Row> merged = existing
+                .select(col("prefix"), col("query"),
+                        col("frequency").alias("old_freq"))
+                .unionByName(newCounts
+                        .select(col("prefix"), col("query"), col("new_freq").alias("old_freq")))
                 .groupBy("prefix", "query")
                 .agg(sum("old_freq").alias("frequency"))
                 .withColumn("last_updated", current_timestamp());
 
-        // 5. Write back cumulative freq (overwrite table)
+        // 4. Persist cumulative frequencies
         merged.write()
                 .format("jdbc")
                 .option("url", jdbcUrl)
                 .option("dbtable", freqTable)
-                .option("user", "root")
-                .option("password", "root")
-                .option("driver", "com.mysql.cj.jdbc.Driver")
+                .option("user", dbUser)
+                .option("password", dbPassword)
+                .option("driver", jdbcDriver)
                 .mode(SaveMode.Overwrite)
                 .save();
 
-        // 6. Compute top-K per prefix
-
-
-        // Step 6: Compute top-K queries per prefix
+        // 5. Compute top‑K suggestions per prefix
         WindowSpec w = Window.partitionBy("prefix").orderBy(col("frequency").desc());
 
         Dataset<Row> topKPerPrefix = merged
                 .withColumn("rank", row_number().over(w))
                 .filter(col("rank").leq(topK))
-                .select("prefix", "query")
                 .groupBy("prefix")
                 .agg(collect_list("query").alias("completions"))
                 .withColumn("completions_json", to_json(col("completions")))
@@ -108,33 +133,16 @@ public class IncrementalAutocomplete {
                         col("last_updated")
                 );
 
-        //this complex type cannot be writen to the db
-//        WindowSpec w = Window.partitionBy("prefix").orderBy(col("frequency").desc());
-//        Dataset<Row> topKdf = merged
-//                .withColumn("rank", row_number().over(w))
-//                .filter(col("rank").leq(topK))
-//                .groupBy("prefix")
-//                .agg(
-//                        collect_list(
-//                                struct(
-//                                        col("query"),
-//                                        col("frequency")
-//                                )
-//                        ).alias("completions")
-//                )
-//                .withColumn("last_updated", current_timestamp());
-
-        // Step 7: Write top-K completions to DB
+        // 6. Persist top‑K table
         topKPerPrefix.write()
                 .format("jdbc")
                 .option("url", jdbcUrl)
                 .option("dbtable", topKTable)
-                .option("user", "root")
-                .option("password", "root")
-                .option("driver", "com.mysql.cj.jdbc.Driver")
+                .option("user", dbUser)
+                .option("password", dbPassword)
+                .option("driver", jdbcDriver)
                 .mode(SaveMode.Overwrite)
                 .save();
-
 
         spark.stop();
     }
